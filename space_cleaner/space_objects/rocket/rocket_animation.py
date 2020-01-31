@@ -3,17 +3,26 @@ import curses
 
 from tools.curses_tools import draw_frame
 
+def get_frame_with_info(filepath: str) -> tuple((str, int, int)):
+  ''' Прочитать кадр из файла
+  
+  :param filepath: путь к фрейму
+  :type filepath: str
+  '''
+  with open(filepath, 'r') as file:
+    frame = file.read()
+    rows = frame.split('\n')
+    length = len(rows)
+    width = max([len(row) for row in rows])
+    return frame, length, width
+  
 
 async def draw_space_ship(canvas):  
-    ''' анимация корабля. Поскольку у нас только 2 кадра, вручную записал границы. Если их будет больше, то нужно будет либо ориентироваться на 
-    максимальный, либо проверять в моменте (но тогда часть рисунка может 
-    провалиться за границу''' 
-    with open('rocket_frame_1.txt', 'r') as file:
-      frame1 = file.read()
-    with open('rocket_frame_2.txt', 'r') as file:
-      frame2 = file.read()
-    frame_length = 10
-    frame_width = 5
+    ''' Анимация корабля.''' 
+    frame1, len1, width1 = get_frame_with_info('space_objects/rocket/frames/frame_1.txt')
+    frame2, len2, width2 = get_frame_with_info('space_objects/rocket/frames/frame_2.txt')
+    frame_length = max([len1, len2])
+    frame_width = max([width1, width2])
     y_max, x_max = canvas.getmaxyx()
     row = y_max // 2
     column = x_max // 2
