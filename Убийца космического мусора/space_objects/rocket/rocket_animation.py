@@ -1,0 +1,105 @@
+import asyncio
+import curses
+
+from tools.curses_tools import draw_frame
+
+
+async def draw_space_ship(canvas):  
+    ''' анимация корабля. Поскольку у нас только 2 кадра, вручную записал границы. Если их будет больше, то нужно будет либо ориентироваться на 
+    максимальный, либо проверять в моменте (но тогда часть рисунка может 
+    провалиться за границу''' 
+    with open('rocket_frame_1.txt', 'r') as file:
+      frame1 = file.read()
+    with open('rocket_frame_2.txt', 'r') as file:
+      frame2 = file.read()
+    frame_length = 10
+    frame_width = 5
+    y_max, x_max = canvas.getmaxyx()
+    row = y_max // 2
+    column = x_max // 2
+    while True:  
+      draw_frame(canvas, row, column, frame1)
+      await asyncio.sleep(0)
+      draw_frame(canvas, row, column, frame1, negative=True)
+      draw_frame(canvas, row, column, frame2)
+      await asyncio.sleep(0)
+      draw_frame(canvas, row, column, frame2, negative=True)
+      row_dir, column_dir, _ = read_controls(canvas)
+      row = row + row_dir
+      if row + row_dir + frame_length > y_max:
+        row = y_max - frame_length
+      elif row + row_dir < 1:
+        row = 1
+      column = column + column_dir 
+      if column + row_dir  + frame_width > x_max - 2:
+        column = x_max - frame_width - 2
+      elif column + column_dir < 1:
+        column = 1
+
+
+SPACE_KEY_CODE = 32
+LEFT_KEY_CODE = 260
+RIGHT_KEY_CODE = 261
+UP_KEY_CODE = 259
+DOWN_KEY_CODE = 258
+
+
+def read_controls(canvas):
+    '''Read keys pressed and returns tuple witl controls state.'''
+    
+    rows_direction = columns_direction = 0
+    space_pressed = False
+
+    while True:
+        pressed_key_code = canvas.getch()
+
+        if pressed_key_code == -1:
+            # https://docs.python.org/3/library/curses.html#curses.window.getch
+            break
+
+        if pressed_key_code == UP_KEY_CODE:
+            rows_direction = -1
+
+        if pressed_key_code == DOWN_KEY_CODE:
+            rows_direction = 1
+
+        if pressed_key_code == RIGHT_KEY_CODE:
+            columns_direction = 1
+
+        if pressed_key_code == LEFT_KEY_CODE:
+            columns_direction = -1
+
+        if pressed_key_code == SPACE_KEY_CODE:
+            space_pressed = True
+    
+    return rows_direction, columns_direction, space_pressed
+
+
+async def fire(canvas, start_row, start_column, rows_speed=-0.3, columns_speed=0):
+    '''Display animation of gun shot. Direction and speed can be specified.'''
+
+    row, column = start_row, start_column
+
+    canvas.addstr(round(row), round(column), '*')
+    await asyncio.sleep(0)
+
+    canvas.addstr(round(row), round(column), 'O')
+    await asyncio.sleep(0)
+    canvas.addstr(round(row), round(column), ' ')
+
+    row += rows_speed
+    column += columns_speed
+
+    symbol = '-' if columns_speed else '|'
+
+    rows, columns = canvas.getmaxyx()
+    max_row, max_column = rows - 1, columns - 1
+
+    curses.beep()
+
+    while 0 < row < max_row and 0 < column < max_column:
+        canvas.addstr(round(row), round(column), symbol)
+        await asyncio.sleep(0)
+        canvas.addstr(round(row), round(column), ' ')
+        row += rows_speed
+        column += columns_speed
