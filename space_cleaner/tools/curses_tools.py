@@ -28,3 +28,29 @@ def draw_frame(canvas, start_row, start_column, text, negative=False):
 
             symbol = symbol if not negative else ' '
             canvas.addch(row, column, symbol)
+
+
+def get_frame_with_info(filepath: str) -> tuple((str, int, int)):
+    ''' Прочитать кадр из файла.
+
+    :param filepath: путь к фрейму
+    :type filepath: str
+    '''
+    with open(filepath, 'r') as file:
+        frame = file.read()
+        rows = frame.split('\n')
+        length = len(rows)
+        width = max([len(row) for row in rows])
+        return frame, length, width
+
+
+def get_frame_size(frame: str):
+    ''' Определить размеры переданного кадра.
+    
+    :param frame: кадр
+    :type frame: str
+    '''
+    rows = frame.split('\n')
+    length = len(rows)
+    width = max([len(row) for row in rows])
+    return length, width

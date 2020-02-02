@@ -1,49 +1,26 @@
 import asyncio
 import curses
 
-from tools.curses_tools import draw_frame
+from tools.curses_tools import draw_frame, get_frame_with_info
+from tools.physics import update_speed
+from space_objects.garbage.fly_garbage import obstacles, obstacles_last_collision
+from tools.game_over import show_gameover
+from tools.explosion import explode
+from tools.game_scenario import scenario
 
-def get_frame_with_info(filepath: str) -> tuple((str, int, int)):
-  ''' Прочитать кадр из файла
-  
-  :param filepath: путь к фрейму
-  :type filepath: str
-  '''
-  with open(filepath, 'r') as file:
-    frame = file.read()
-    rows = frame.split('\n')
-    length = len(rows)
-    width = max([len(row) for row in rows])
-    return frame, length, width
-  
 
-async def draw_space_ship(canvas):  
-    ''' Анимация корабля.''' 
-    frame1, len1, width1 = get_frame_with_info('space_objects/rocket/frames/frame_1.txt')
-    frame2, len2, width2 = get_frame_with_info('space_objects/rocket/frames/frame_2.txt')
-    frame_length = max([len1, len2])
-    frame_width = max([width1, width2])
-    y_max, x_max = canvas.getmaxyx()
-    row = y_max // 2
-    column = x_max // 2
-    while True:  
-      draw_frame(canvas, row, column, frame1)
-      await asyncio.sleep(0)
-      draw_frame(canvas, row, column, frame1, negative=True)
-      draw_frame(canvas, row, column, frame2)
-      await asyncio.sleep(0)
-      draw_frame(canvas, row, column, frame2, negative=True)
-      row_dir, column_dir, _ = read_controls(canvas)
-      row = row + row_dir
-      if row + row_dir + frame_length > y_max:
-        row = y_max - frame_length
-      elif row + row_dir < 1:
-        row = 1
-      column = column + column_dir 
-      if column + row_dir  + frame_width > x_max - 2:
-        column = x_max - frame_width - 2
-      elif column + column_dir < 1:
-        column = 1
+spaceship_frame = None
+
+
+async def animate_spaceship():
+    global spaceship_frame
+    frame1, _, _ = get_frame_with_info('space_objects/rocket/frames/frame_1.txt')
+    frame2, _, _ = get_frame_with_info('space_objects/rocket/frames/frame_2.txt')
+    while True:
+        spaceship_frame = frame1
+        await asyncio.sleep(0)
+        spaceship_frame = frame2
+        await asyncio.sleep(0)
 
 
 SPACE_KEY_CODE = 32
@@ -107,8 +84,58 @@ async def fire(canvas, start_row, start_column, rows_speed=-0.3, columns_speed=0
     curses.beep()
 
     while 0 < row < max_row and 0 < column < max_column:
+        for obstacle in obstacles:
+            if obstacle.has_collision(row, column):
+                obstacles_last_collision.append(obstacle)
+                return
         canvas.addstr(round(row), round(column), symbol)
         await asyncio.sleep(0)
         canvas.addstr(round(row), round(column), ' ')
         row += rows_speed
         column += columns_speed
+
+
+async def run_spaceship(canvas, coroutines):  
+    ''' Анимация корабля.'''
+    global spaceship_frame
+    _, len1, width1 = get_frame_with_info('space_objects/rocket/frames/frame_1.txt')
+    _, len2, width2 = get_frame_with_info('space_objects/rocket/frames/frame_2.txt')
+    frame_length = max([len1, len2])
+    frame_width = max([width1, width2])
+
+    y_max, x_max = canvas.getmaxyx()
+    row = y_max // 2
+    column = x_max // 2
+
+    row_speed = 0
+    column_speed = 0
+    
+    while True:  
+        draw_frame(canvas, row, column, spaceship_frame)
+        current_frame = spaceship_frame
+        await asyncio.sleep(0)
+        draw_frame(canvas, row, column, current_frame, negative=True)
+
+        row_dir, column_dir, space_pressed = read_controls(canvas)
+        if space_pressed and scenario.turn_cannon():
+            coroutines.append(fire(canvas, row, column + 2))
+        row_speed, column_speed = update_speed(row_speed, column_speed, row_dir, column_dir)
+
+        row = row + row_speed
+        if row + row_dir + frame_length > y_max:
+            row = y_max - frame_length
+        elif row + row_dir < 1:
+            row = 1
+
+        column = column + column_speed 
+        if column + row_dir  + frame_width > x_max - 2:
+            column = x_max - frame_width - 2
+        elif column + column_dir < 1:
+            column = 1
+
+        for obstacle in obstacles:
+            if obstacle.has_collision(row, column):
+                draw_frame(canvas, row, column, current_frame, negative=True)
+                await explode(canvas, row, column)
+                coroutines.append(show_gameover(canvas))
+                return

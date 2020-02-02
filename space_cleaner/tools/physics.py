@@ -1,7 +1,7 @@
 import math
 
 def _limit(value, min_value, max_value):
-    """Limit value by min_value and max_value."""
+    '''Limit value by min_value and max_value.'''
 
     if value < min_value:
         return min_value
@@ -11,7 +11,7 @@ def _limit(value, min_value, max_value):
 
 
 def _apply_acceleration(speed, speed_limit, forward=True):
-    """Change speed — accelerate or brake — according to force direction."""
+    '''Change speed — accelerate or brake — according to force direction.'''
 
     speed_limit = abs(speed_limit)
 
@@ -36,24 +36,24 @@ def _apply_acceleration(speed, speed_limit, forward=True):
 
 
 def update_speed(row_speed, column_speed, rows_direction, columns_direction, row_speed_limit=2, column_speed_limit=2, fading=0.8):
-    """Update speed smootly to make control handy for player. Return new speed value (row_speed, column_speed)
-    
+    '''Update speed smootly to make control handy for player. Return new speed value (row_speed, column_speed)
+
     rows_direction — is a force direction by rows axis. Possible values:
-       -1 — if force pulls up
-       0  — if force has no effect
-       1  — if force pulls down
+        -1 — if force pulls up
+        0  — if force has no effect
+        1  — if force pulls down
     columns_direction — is a force direction by colums axis. Possible values:
-       -1 — if force pulls left
-       0  — if force has no effect
-       1  — if force pulls right
-    """
+        -1 — if force pulls left
+        0  — if force has no effect
+        1  — if force pulls right
+    '''
 
     if rows_direction not in (-1, 0, 1):
         raise ValueError(f'Wrong rows_direction value {rows_direction}. Expects -1, 0 or 1.')
 
     if columns_direction not in (-1, 0, 1):
         raise ValueError(f'Wrong columns_direction value {columns_direction}. Expects -1, 0 or 1.')
-    
+
     if fading < 0 or fading > 1:
         raise ValueError(f'Wrong columns_direction value {fading}. Expects float between 0 and 1.')
         
