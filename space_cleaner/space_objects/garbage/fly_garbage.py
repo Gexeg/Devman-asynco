@@ -5,11 +5,34 @@ from tools.curses_tools import draw_frame, get_frame_with_info
 from tools.obstacles import Obstacle
 from tools.sleep import sleep
 from tools.explosion import explode
-from tools.game_scenario import get_garbage_delay_tics
+from tools.game_scenario import space_globals
 
 
 obstacles = []
 obstacles_last_collision = []
+
+
+async def fill_orbit_with_garbage(canvas, coroutines: list):
+    ''' Генерирует новые корутины с падающим мусором.
+    
+    :param canvas: экземлпяр холста
+    :type canvas: canvas
+    :param coroutines: список корутин
+    :type coroutines: list
+    :param tics: интервал между появлением нового мусора
+    :type tics: int
+    :yield: корутину - падающий мусор
+    :rtype: coroutine
+    '''
+    global space_globals
+    while space_globals.clean_space:
+        await asyncio.sleep(0)
+    while True:
+        _, x_max = canvas.getmaxyx()
+        column = random.randint(1, x_max - 2)
+        coroutines.append(fly_garbage(canvas, column))
+        tics = space_globals.garbage_delay_tics
+        await sleep(tics)
 
 
 async def fly_garbage(canvas, column, speed=0.5):
@@ -50,25 +73,3 @@ def get_random_garbage_frame():
     ]
     path = 'space_objects/garbage/frames/' + random.choice(garbage_roster)+ '.txt'
     return path
-
-
-
-async def fill_orbit_with_garbage(canvas, coroutines: list):
-    ''' Генерирует новые корутины с падающим мусором.
-    
-    :param canvas: экземлпяр холста
-    :type canvas: canvas
-    :param coroutines: список корутин
-    :type coroutines: list
-    :param tics: интервал между появлением нового мусора
-    :type tics: int
-    :yield: корутину - падающий мусор
-    :rtype: coroutine
-    '''
-
-    while True:
-        _, x_max = canvas.getmaxyx()
-        column = random.randint(1, x_max - 2)
-        coroutines.append(fly_garbage(canvas, column))
-        tics = 20
-        await sleep(tics)

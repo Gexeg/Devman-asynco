@@ -4,9 +4,9 @@ import curses
 from tools.curses_tools import draw_frame, get_frame_with_info
 from tools.physics import update_speed
 from space_objects.garbage.fly_garbage import obstacles, obstacles_last_collision
-from tools.game_over import show_gameover
+from tools.game_messages import show_gameover
 from tools.explosion import explode
-from tools.game_scenario import scenario
+from tools.game_scenario import space_globals
 
 
 spaceship_frame = None
@@ -98,6 +98,7 @@ async def fire(canvas, start_row, start_column, rows_speed=-0.3, columns_speed=0
 async def run_spaceship(canvas, coroutines):  
     ''' Анимация корабля.'''
     global spaceship_frame
+    global space_globals
     _, len1, width1 = get_frame_with_info('space_objects/rocket/frames/frame_1.txt')
     _, len2, width2 = get_frame_with_info('space_objects/rocket/frames/frame_2.txt')
     frame_length = max([len1, len2])
@@ -117,7 +118,7 @@ async def run_spaceship(canvas, coroutines):
         draw_frame(canvas, row, column, current_frame, negative=True)
 
         row_dir, column_dir, space_pressed = read_controls(canvas)
-        if space_pressed and scenario.turn_cannon():
+        if space_pressed and space_globals.plasma_gun:
             coroutines.append(fire(canvas, row, column + 2))
         row_speed, column_speed = update_speed(row_speed, column_speed, row_dir, column_dir)
 
