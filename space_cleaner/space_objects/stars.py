@@ -2,6 +2,8 @@ import asyncio
 import curses
 import random
 
+from tools.sleep import sleep
+
 
 def get_stars(canvas, num):
   ''' Получить необходимое количество звезд-корутин.
@@ -16,7 +18,7 @@ def get_stars(canvas, num):
 
 
 def get_random_star(canvas):
-    ''' Нарисовать звезду.
+    ''' Создать корутину, рисующую звезду.
 
     :param canvas: объект холста
     :type canvas: canvas
@@ -30,30 +32,30 @@ def get_random_star(canvas):
 
 
 async def blink(canvas, offset_tics, column, row):
-    ''' анимация звезды. У звезды 4 фазы. Для того, чтобы они мигали асинхронно, первая фаза случайна'''
+    ''' Анимация звезды. 
+    
+    У звезды 4 фазы. Для того, чтобы они мигали асинхронно, первая фаза случайна.
+    
+    :param canvas: объект холста
+    :type canvas: canvas
+    :param offset_tics: время действия первой фазы
+    :type offset_tics: int
+    :param column: координата на холсте
+    :type column: int
+    :param row: координата на холсте
+    :type row: int
+    '''
     symbols = ['*', ':', '=', '+', '-']
     symbol = random.choice(symbols)
     while True:
         canvas.addstr(row, column, symbol, curses.A_DIM)
-        i = 0
-        for i in range(offset_tics):
-          i +=1
-          await asyncio.sleep(0)
+        await sleep(offset_tics)
 
         canvas.addstr(row, column, symbol)
-        i = 0
-        for i in range(3):
-          i +=1
-          await asyncio.sleep(0)
+        await sleep(3)
 
         canvas.addstr(row, column, symbol, curses.A_BOLD)
-        i = 0
-        for i in range(5):
-          i +=1
-          await asyncio.sleep(0)
+        await sleep(5)
 
         canvas.addstr(row, column, symbol)
-        i = 0
-        for i in range(3):
-          i += 1
-          await asyncio.sleep(0)
+        await sleep(3)
